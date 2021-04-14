@@ -108,13 +108,13 @@ return [
 ```php
 $orders = make(\AmazonSellingPartnerAPI\Module\Orders::class, [
     'auth' => $auth
-])
+]);
   
-$order->getOrder([
+$orders->getOrder([
         'path_params' => [
             "orderId" => "XXX-XXXXXX-XXXXXXX",
         ],
-    ])
+    ]);
 ```
 
 

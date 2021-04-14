@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace AmazonSellingPartnerAPI\Signature;
 
-use AmazonSellingPartnerAPI\Cont\SignInterface;
+use AmazonSellingPartnerAPI\Contract\SignInterface;
 use AmazonSellingPartnerAPI\Validator;
 
 class V4Signature implements SignInterface
