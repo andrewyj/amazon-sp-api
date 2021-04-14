@@ -1,0 +1,21 @@
+{
+    "name": "ju/amazon-sp-api",
+    "description": "Amazon selling partner sdk",
+    "require": {
+        "guzzlehttp/guzzle": "^6.3|^7.0",
+        "php": ">=7.3",
+        "ext-json": "*"
+    },
+    "authors": [
+        {
+            "name": "ju",
+            "email": "yingjunov@gmail.com"
+        }
+    ],
+    "minimum-stability" : "dev",
+    "autoload": {
+        "psr-4": {
+            "AmazonSellingPartnerAPI\\": "src"
+        }
+    }
+}
