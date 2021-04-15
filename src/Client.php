@@ -176,15 +176,15 @@ class Client
                 $httpBody
             );
             $response = $this->client->send($request);
-        } catch (\GuzzleHttp\Exception\ClientException $e) {
+            $contents = $response->getBody()->getContents();
+        } catch (\GuzzleHttp\Exception\ClientException | RequestException $e) {
             $response = $e->getResponse();
-        } catch (RequestException $e) {
-            $response = $e->getResponse();
+            $contents = str_replace(["\r\n", "\r", "\n"], '', $response->getBody()->getContents());
         } catch (\Exception $e) {
             throw new ClientException($e->getMessage(), $e->getCode());
         }
 
-        return json_decode($response->getBody()->getContents(), true);
+        return Utils::jsonDecode($contents, true);
     }
 
     protected function getSignedHeaders($method, $uri, $queryString): array
