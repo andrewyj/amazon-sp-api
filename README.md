@@ -72,13 +72,20 @@ var_dump($client->get('/orders/v0/orders/XXX-XXXXXX-XXXXXXX'));
 $sign = new \AmazonSellingPartnerAPI\Signature\V4Signature();
 $cache = new Cache(); //缓存驱动必须实现 Psr\SimpleCache\CacheInterface 接口
 $order = new \AmazonSellingPartnerAPI\Module\Orders($auth, $cache, $sign);
-var_dump($order->getOrder([
-        'path_params' => [
-            "orderId" => "XXX-XXXXXX-XXXXXXX",
-        ],
-    ]));
-```
 
+//路由参数传入形式
+var_dump($order->getOrder('XXX-XXXXXX-XXXXXXX')->send());
+
+//查询参数传入形式
+var_dump($order->getOrders()->withQuery([
+  "CreatedAfter" => "2020-04-13T06:28:08Z",
+  "MarketplaceIds" => [
+      "A2EUQ1WTGCTBG2",
+      'A1PA6795UKMFR9'
+  ]
+])->send());
+```
+`send` 方法一定要在最后调用。
 
 
 # hyper 框架内使用使用示例
@@ -110,11 +117,7 @@ $orders = make(\AmazonSellingPartnerAPI\Module\Orders::class, [
     'auth' => $auth
 ]);
   
-$orders->getOrder([
-        'path_params' => [
-            "orderId" => "XXX-XXXXXX-XXXXXXX",
-        ],
-    ]);
+$orders->getOrder('XXX-XXXXXX-XXXXXXX')->send();
 ```
 
 

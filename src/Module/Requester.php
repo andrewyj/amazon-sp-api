@@ -53,6 +53,18 @@ class Requester
     protected $signer;
 
     /**
+     * @var array A request context
+     * [
+     *     uri:string Request uri
+     *     query_params:array query params
+     *     form_params:array form params
+     *     config:array Config of current operationId
+     *     name:string  Current operationId
+     * ]
+     */
+    protected $context = [];
+
+    /**
      * Requester constructor.
      * @param array $auth
      * [
@@ -116,6 +128,66 @@ class Requester
     {
         $this->client->debug($debug);
         return $this;
+    }
+
+    public function withQuery(array $queryParams): self
+    {
+         $validated = $this->validate(
+            $this->context['config']['query_params'] ?? [],
+            $queryParams
+         );
+         foreach ($validated as $k => $v) {
+             if (is_array($v)) {
+                 $validated[$k] = implode(',', $v);
+             }
+         }
+        $this->context['query_params'] = $validated;
+
+        return $this;
+    }
+
+    public function withForm(array $formParams): self
+    {
+        $this->context['form_params'] = $this->validate(
+            $this->context['config']['form_params'] ?? [],
+            $formParams
+        );
+
+        return $this;
+    }
+
+    /**
+     * Sending a request.
+     *
+     * @return array|mixed
+     * @throws ModuleException
+     * @throws \AmazonSellingPartnerAPI\Exception\AmazonSellingPartnerAPIException
+     * @throws \AmazonSellingPartnerAPI\Exception\ClientException
+     * @throws \AmazonSellingPartnerAPI\Exception\OAuthException
+     */
+    public function send()
+    {
+        if (empty($this->auth)) {
+            throw new ModuleException('Not auth info has set');
+        }
+        $this->auth['access_token'] = $this->getAccessToken();
+        if (!empty($this->auth['role_arn'])) {
+            $roleCredentials = $this->getRoleAssumeCredentials();
+            $this->auth = array_merge($this->auth, [
+                'access_key'        => $roleCredentials['AccessKeyId'],
+                'secret_key'        => $roleCredentials['SecretAccessKey'],
+                'session_token'     => $roleCredentials['SessionToken']
+            ]);
+        }
+        $client = $this->client->setAuth($this->auth);
+        $context = $this->context;
+
+        return $client->request(
+            $context['config']['method'],
+            $context['uri'],
+            $context['form_params'] ?? [],
+            $context['query_params'] ?? [],
+        );
     }
 
     /**
@@ -207,34 +279,6 @@ class Requester
     }
 
     /**
-     * Make a call by given operationId.
-     *
-     * @param string $method
-     * @param string $uri
-     * @param array $queryParams
-     * @param array $formParams
-     * @return mixed
-     * @throws \AmazonSellingPartnerAPI\Exception\AmazonSellingPartnerAPIException
-     * @throws \AmazonSellingPartnerAPI\Exception\ClientException
-     * @throws \AmazonSellingPartnerAPI\Exception\OAuthException
-     */
-    protected function doCall(string $method, string $uri, array $queryParams, array $formParams)
-    {
-        $this->auth['access_token'] = $this->getAccessToken();
-        if (!empty($this->auth['role_arn'])) {
-            $roleCredentials = $this->getRoleAssumeCredentials();
-            $this->auth = array_merge($this->auth, [
-                'access_key'        => $roleCredentials['AccessKeyId'],
-                'secret_key'        => $roleCredentials['SecretAccessKey'],
-                'session_token'     => $roleCredentials['SessionToken']
-            ]);
-        }
-        $client = $this->client->setAuth($this->auth);
-
-        return $client->request($method, $uri, $formParams, $queryParams);
-    }
-
-    /**
      * Validating an array of arguments and gets the validated data.
      *
      * @param $rules
@@ -264,39 +308,36 @@ class Requester
      */
     protected function resolveUri(string $uri, array $pathParams): string
     {
-        foreach ($pathParams as $key => $param) {
-            $uri = str_replace("{{$key}}", $param, $uri);
+        preg_match_all('/\{(\w+)\}/', $uri, $matched);
+        if (!empty($matched[1])) {
+            foreach ($matched[1] as $index => $key) {
+
+                //optional params
+                if (strpos($key, '?') !== false) {
+                    if (empty($pathParams[$index])) {
+                        $uri = str_replace("/{{$key}}", '', $uri);
+                    }
+                } elseif (empty($pathParams[$index])) {
+                    throw new ModuleException("Missing params：{$key}");
+                }
+                $uri = str_replace("{{$key}}", $pathParams[$index], $uri);
+            }
         }
 
         return $uri;
     }
 
-    public function __call($name, $arguments)
+    public function __call($name, $pathParams): self
     {
-        if (empty($this->auth)) {
-            throw new ModuleException('Not auth info has set');
-        }
         if (!isset($this->config[$name])) {
-            throw new ModuleException("invalid operationId: {$name}");
+            throw new ModuleException("Invalid operationId: {$name}");
         }
-        if (!isset($arguments[0])) {
-            throw new ModuleException('Missing params');
-        }
-        $config = $this->config[$name];
-        $data = $arguments[0];
-        $pathParams  = $this->validate($config['path_params'] ?? [], $data['path_params'] ?? []);
-        $queryParams = $this->validate($config['query_params'] ?? [], $data['query_params'] ?? []);
-        foreach ($queryParams as $k => $v) {
-            if (is_array($v)) {
-                $queryParams[$k] = implode(',', $v);
-            }
-        }
+        $this->context = [
+            'name'   => $name,
+            'config' => $this->config[$name],
+            'uri'    => $this->resolveUri($this->config[$name]['path'], $pathParams)
+        ];
 
-        return $this->doCall(
-            $config['method'],
-            $this->resolveUri($config['path'], $pathParams),
-            $queryParams,
-            $this->validate($config['form_params'] ?? [], $data['form_params'] ?? [])
-        );
+        return $this;
     }
 }
