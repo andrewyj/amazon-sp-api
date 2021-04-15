@@ -120,8 +120,7 @@ class AssumeRole
         $res = json_decode($response->getBody(), true);
         $credentials = $res['AssumeRoleResponse']['AssumeRoleResult']['Credentials'] ?? null;
         if (is_null($credentials)) {
-            //TODO
-            throw new AmazonSellingPartnerAPIException('Not credentials fetched');
+            throw new AmazonSellingPartnerAPIException('Assume role error: '. $credentials['Error']['Message']);
         }
 
         return $credentials;
