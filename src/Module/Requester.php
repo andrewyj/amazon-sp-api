@@ -81,7 +81,7 @@ class Requester
      * @throws ModuleException
      * @throws \AmazonSellingPartnerAPI\Exception\ClientException
      */
-    public function __construct(array $auth, CacheInterface $cache, SignInterface $signer)
+    public function __construct(array $auth,  $cache, SignInterface $signer)
     {
         $this->validator = new Validator();
         $this->cache     = $cache;

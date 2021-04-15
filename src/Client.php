@@ -32,12 +32,6 @@ class Client
         self::REGION_FAR_EAST      => 'sellingpartnerapi-fe.amazon.com',
     ];
 
-    protected $regionSandboxEndpoint = [
-        self::REGION_NORTH_AMERICA => 'sandbox.sellingpartnerapi-na.amazon.com',
-        self::REGION_EUROPE        => 'sandbox.sellingpartnerapi-eu.amazon.com',
-        self::REGION_FAR_EAST      => 'sandbox.sellingpartnerapi-fe.amazon.com',
-    ];
-
     /**
      * @var string[] Auth rules.
      */
@@ -218,8 +212,7 @@ class Client
      */
     protected function getHost(bool $withScheme = true): string
     {
-        $endpoint = $this->debug ? $this->regionSandboxEndpoint : $this->regionEndpoint;
-        $host = $endpoint[$this->auth['region']];
+        $host = ($this->debug ? 'sandbox.' : ''). $this->regionEndpoint[$this->auth['region']];
         if ($withScheme === false) {
             return $host;
         }

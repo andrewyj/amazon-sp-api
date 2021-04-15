@@ -3,8 +3,8 @@
 namespace AmazonSellingPartnerAPI\Module;
 
 /**
- * @method static void getOrders(array $arguments = [])
- * @method static void getOrder(array $arguments = [])
+ * @method Orders getOrders()
+ * @method Orders getOrder($orderId)
  */
 class Orders extends Requester
 {
