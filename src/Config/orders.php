@@ -24,8 +24,25 @@ return [
     'getOrder' => [
         'path' => '/orders/v0/orders/{orderId}',
         'method' => 'GET',
-        'path_params' => [
-            'orderId' => 'required|string'
+    ],
+    'getOrderBuyerInfo' => [
+        'path' => '/orders/v0/orders/{orderId}/buyerInfo',
+        'method' => 'GET',
+    ],
+    'getOrderAddress' => [
+        'path' => '/orders/v0/orders/{orderId}/address',
+        'method' => 'GET',
+    ],
+    'getOrderItems' => [
+        'path' => '/orders/v0/orders/{orderId}/orderItems',
+        'method' => 'GET',
+    ],
+    'getOrderItemsBuyerInfo' => [
+        'path' => '/orders/v0/orders/{orderId}/orderItems/buyerInfo',
+        'method' => 'GET',
+        'query_params' => [
+            'NextToken' => 'string'
         ]
-    ]
+    ],
+
 ];
