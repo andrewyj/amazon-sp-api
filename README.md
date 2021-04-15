@@ -71,7 +71,7 @@ var_dump($client->get('/orders/v0/orders/XXX-XXXXXX-XXXXXXX'));
 ```php
 $sign = new \AmazonSellingPartnerAPI\Signature\V4Signature();
 $cache = new Cache(); //缓存驱动必须实现 Psr\SimpleCache\CacheInterface 接口
-$order = new \AmazonSellingPartnerAPI\Module\Orders($auth, $cache, $sign);
+$order = new \AmazonSellingPartnerAPI\Module\Order($auth, $cache, $sign);
 
 //路由参数传入形式
 var_dump($order->getOrder('XXX-XXXXXX-XXXXXXX')->send());
@@ -113,7 +113,7 @@ return [
 ### 3. 使用相应模块
 
 ```php
-$orders = make(\AmazonSellingPartnerAPI\Module\Orders::class, [
+$orders = make(\AmazonSellingPartnerAPI\Module\Order::class, [
     'auth' => $auth
 ]);
   
