@@ -36,7 +36,7 @@ class Validator
                     if (strpos($ruleItem, 'required') === false && !isset($values[$key])) {
                         continue;
                     }
-                    $res = $this->doValidate($values[$key] ?? null, $ruleItem, $key);
+                    $res = $this->singleValidate($values[$key] ?? null, $ruleItem, $key);
                     if ($res === false) {
                         $shouldPassed = false;
                         break;
@@ -48,7 +48,7 @@ class Validator
             }
         }
 
-        return count($this->errors) <= 0;
+        return count($this->errors) == 0;
     }
 
     public function validated(): array
@@ -66,7 +66,7 @@ class Validator
         return array_values($this->errors)[0] ?? '';
     }
 
-    protected function doValidate($value, string $rule, $key): bool
+    protected function singleValidate($value, string $rule, $key): bool
     {
         $ruleValue = explode(':', $rule);
         if ($ruleValue[0] === 'required') {
@@ -119,17 +119,16 @@ class Validator
 
     protected function arrayValidate($value, array $rules, array $keys, int $currentLevel,int $totalLevel)
     {
-        if (is_null($value)) {
-            if (!in_array('required', $rules, true)) {
-                return false;
-            } else {
+        if (empty($value)) {
+            if (in_array('required', $rules, true)) {
                 $key = implode('.', array_slice($keys, 0, ($currentLevel+1)));
-                $this->errors[$key] = "{$key} can not be null";
+                $this->errors[$key] = "{$key} can not be empty";
             }
+            return false;
         }
         if ($totalLevel == $currentLevel) {
             foreach ($rules as $rule) {
-                if ($this->doValidate($value, $rule, implode('.', $keys)) === false) {
+                if ($this->singleValidate($value, $rule, implode('.', $keys)) === false) {
                     return false;
                 }
             }
