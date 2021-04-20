@@ -119,6 +119,14 @@ class Validator
 
     protected function arrayValidate($value, array $rules, array $keys, int $currentLevel,int $totalLevel)
     {
+        if (is_null($value)) {
+            if (!in_array('required', $rules, true)) {
+                return false;
+            } else {
+                $key = implode('.', array_slice($keys, 0, ($currentLevel+1)));
+                $this->errors[$key] = "{$key} can not be null";
+            }
+        }
         if ($totalLevel == $currentLevel) {
             foreach ($rules as $rule) {
                 if ($this->doValidate($value, $rule, implode('.', $keys)) === false) {
