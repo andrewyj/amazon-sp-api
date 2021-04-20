@@ -59,6 +59,12 @@ class Validator
                         $this->errors[$key] = "{$key} is greater than {$max}.";
                         break;
                     }
+                } elseif ($ruleValue[0] === 'in') {
+                    $enum = explode(',', $ruleValue[1] ?? '');
+                    if (!in_array($value, $enum, true)) {
+                        $this->errors[$key] = "value {$value} of {$key} not valid.";
+                        break;
+                    }
                 } else {
                     $this->errors['rule'] = "unknown rule: {$ruleValue[0]}.";
                     return false;
