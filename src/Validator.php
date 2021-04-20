@@ -8,31 +8,43 @@ class Validator
 {
     protected $validated = [];
 
+    protected $validatedArray = [];
+
     protected $errors = [];
 
     public function validate(array $rules, array $values): bool
     {
         $this->errors = [];
         $this->validated = [];
+        $this->validatedArray = [];
         foreach ($rules as $key => $rule) {
             $ruleItems = explode('|', $rule);
             if (empty($ruleItems)) {
                 continue;
             }
-            $value = $values[$key] ?? null;
             if (strpos($key, '.') > 0) {
                 $keys = explode('.', $key);
                 $value = $values[$keys[0]] ?? null;
-                foreach ($ruleItems as $ruleItem) {
-                    $this->arrayValidate($value, $ruleItem, $keys, 0, count($keys) -1);
+                unset($this->validated[$keys[0]]);
+                $res = $this->arrayValidate($value, $ruleItems, $keys, 0, count($keys) -1);
+                if ($res !== false) {
+                    $this->validatedArray[$keys[0]] = array_merge($this->validatedArray[$keys[0]] ?? [], $res);
                 }
             } else {
+                $shouldPassed = true;
                 foreach ($ruleItems as $ruleItem) {
-                    $this->doValidate($value, $ruleItem, $key);
+                    if (strpos($ruleItem, 'required') === false && !isset($values[$key])) {
+                        continue;
+                    }
+                    $res = $this->doValidate($values[$key] ?? null, $ruleItem, $key);
+                    if ($res === false) {
+                        $shouldPassed = false;
+                        break;
+                    }
                 }
-            }
-            if (!isset($this->errors[$key]) && isset($values[$key])) {
-                $this->validated[$key] = $values[$key];
+                if ($shouldPassed === true && isset($values[$key])) {
+                    $this->validated[$key] = $values[$key];
+                }
             }
         }
 
@@ -41,7 +53,7 @@ class Validator
 
     public function validated(): array
     {
-        return $this->validated;
+        return array_merge($this->validated, $this->validatedArray);
     }
 
     public function errors(): array
@@ -57,9 +69,6 @@ class Validator
     protected function doValidate($value, string $rule, $key): bool
     {
         $ruleValue = explode(':', $rule);
-        if (is_null($value) && !in_array('required', $ruleValue, true)) {
-            return true;
-        }
         if ($ruleValue[0] === 'required') {
             if (is_null($value)) {
                 $this->errors[$key] = "{$key} is required";
@@ -108,26 +117,39 @@ class Validator
         return true;
     }
 
-    protected function arrayValidate($value, string $rule, array $keys, int $currentLevel,int $totalLevel)
+    protected function arrayValidate($value, array $rules, array $keys, int $currentLevel,int $totalLevel)
     {
         if ($totalLevel == $currentLevel) {
-            $this->doValidate($value, $rule, implode('.', $keys));
-            return;
+            foreach ($rules as $rule) {
+                if ($this->doValidate($value, $rule, implode('.', $keys)) === false) {
+                    return false;
+                }
+            }
+
+            return $value;
         }
+        $validated = [];
         ++$currentLevel;
         $index = $keys[$currentLevel];
-        $key = implode('.', array_slice($keys, 0, $currentLevel));
         if ($index === '*') {
-            if (!is_array($value)) {
-                $keys[$currentLevel] = $currentLevel;
-                $this->errors[$key] = "{$key} must be an array";
-                return;
-            }
-            foreach ($value as $item) {
-                $this->arrayValidate($item, $rule, $keys, $currentLevel, $totalLevel);
+            $value = (array)$value;
+            foreach ($value as $index => $item) {
+                $res = $this->arrayValidate($item, $rules, $keys, $currentLevel, $totalLevel);
+                if ($res === false) {
+                    return false;
+                }
+                $validated[$index] = $res;
             }
         } else {
-            $this->arrayValidate($value[$index] ?? null, $rule, $keys, $currentLevel, $totalLevel);
+            $res = $this->arrayValidate($value[$index] ?? null, $rules, $keys, $currentLevel, $totalLevel);
+            if ($res === false) {
+                return false;
+            }
+            if (isset($value[$index])) {
+                $validated[$index] = $value[$index];
+            }
         }
+
+        return $validated;
     }
 }
