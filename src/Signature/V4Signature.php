@@ -21,7 +21,7 @@ class V4Signature implements SignInterface
         'security_token'    => 'string',
         'service'           => 'string',
         'query_string'      => 'string',
-        'form_params'       => 'string',
+        'body'              => 'string',
     ];
 
     protected $lastSignError = '';
@@ -43,7 +43,7 @@ class V4Signature implements SignInterface
         $service           = $params['service'] ?? 'execute-api';
 
         // Hashed payload
-        $hashedPayload = hash('sha256', $params['form_params'] ?? '');
+        $hashedPayload = hash('sha256', $params['body'] ?? '');
 
         //Compute Canonical Headers
         $canonicalHeaders = [

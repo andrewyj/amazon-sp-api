@@ -8,6 +8,7 @@ use AmazonSellingPartnerAPI\Contract\SignInterface;
 use AmazonSellingPartnerAPI\Exception\ModuleException;
 use AmazonSellingPartnerAPI\OAuth;
 use AmazonSellingPartnerAPI\Validator;
+use GuzzleHttp\Utils;
 use Psr\SimpleCache\CacheInterface;
 
 class Requester
@@ -156,6 +157,13 @@ class Requester
         return $this;
     }
 
+    public function withBody(string $body): self
+    {
+        $this->context['body'] = $body;
+
+        return $this;
+    }
+
     /**
      * Sending a request.
      *
@@ -187,6 +195,7 @@ class Requester
             $context['uri'],
             $context['form_params'] ?? [],
             $context['query_params'] ?? [],
+            $context['body'] ?? ''
         );
     }
 

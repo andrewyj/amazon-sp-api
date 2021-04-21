@@ -133,8 +133,8 @@ class Validator
         $index = $keys[$currentLevel];
 
         if ($index !== '*') {
-            $val = $value[$index];
-            $value = [$index => $val ?? null];
+            $val = $value[$index] ?? null;
+            $value = [$index => $val];
         }
         foreach ($value as $index => $item) {
             if (!isset($validated[$index])) {

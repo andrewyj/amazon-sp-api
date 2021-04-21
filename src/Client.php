@@ -141,6 +141,7 @@ class Client
      * @param string $uri
      * @param array $formParams
      * @param array $queryParams
+     * @param string $body
      * @return mixed
      * @throws ClientException
      */
@@ -148,16 +149,16 @@ class Client
         string $method,
         string $uri,
         array $formParams = [],
-        array $queryParams = []
+        array $queryParams = [],
+        string $body = ''
     ): array {
         if (empty($this->auth)) {
             throw new ClientException('Not auth info has set');
         }
-        $httpBody = '';
         try {
             if (!empty($formParams)) {
                 ksort($formParams);
-                $httpBody = Utils::jsonEncode($formParams);
+                $body = Utils::jsonEncode($formParams);
             }
             if (!empty($queryParams)) {
                 ksort($queryParams);
@@ -166,8 +167,8 @@ class Client
             $request = new Request(
                 $method,
                 $this->getHost(). '/'. trim($uri, '/'). ($queryString ? '?'. $queryString : ''),
-                $this->getSignedHeaders($method, $uri, $queryString),
-                $httpBody
+                $this->getSignedHeaders($method, $uri, $queryString, $body),
+                $body
             );
             $response = $this->client->send($request);
             $contents = $response->getBody()->getContents();
@@ -181,13 +182,14 @@ class Client
         return Utils::jsonDecode($contents, true);
     }
 
-    protected function getSignedHeaders($method, $uri, $queryString): array
+    protected function getSignedHeaders(string $method, string $uri, string $queryString, string $body): array
     {
         $signBody = [
             'host'              => $this->getHost(false),
             'method'            => $method,
             'uri'               => $uri,
             'query_string'      => $queryString,
+            'body'              => $body,
             'access_key'        => $this->auth['access_key'],
             'secret_key'        => $this->auth['secret_key'],
             'region'            => $this->auth['region'],
