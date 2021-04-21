@@ -7,46 +7,22 @@ class Schemas
     protected static $container = [
         'containerType'        => 'in:PACKAGE',
         'containerReferenceId' => 'required|string|max:40',
-        'value'                => [
-            'link'  => 'currency',
-            'rules' => 'required'
-        ],
-        'dimensions'           => [
-            'link'  => 'dimensions',
-            'rules' => 'required'
-        ],
-        'items.*'              => [
-            'link'  => 'containerItem',
-            'rules' => 'required'
-        ],
-        'weight' => [
-            'link'  => 'weight',
-            'rules' => 'required'
-        ]
+        'value'                => '@currency',
+        'dimensions'           => '@dimensions',
+        'items.*'              => '@containerItem',
+        'weight'               => '@weight'
     ];
 
     protected static $containerItem = [
-        'quantity' => 'required|integer',
-        'unitPrice' => [
-            'link' => 'currency',
-            'rules' => 'required',
-        ],
-        'unitWeight' => [
-            'link'  => 'weight',
-            'rules' => 'required'
-        ],
-        'title' => 'required|string|max:30'
+        'quantity'   => 'required|integer',
+        'unitPrice'  => '@currency',
+        'unitWeight' => '@weight',
+        'title'      => 'required|string|max:30'
     ];
 
     protected static $containerSpecification = [
-        'weight'     => [
-            'link'  => 'weight',
-            'rules' => 'required'
-        ],
-        'dimensions' => [
-            'link'  => 'dimensions',
-            'rules' => 'required'
-        ],
+        'weight'     => '@weight',
+        'dimensions' => '@dimensions',
     ];
 
     protected static $weight = [
@@ -63,7 +39,7 @@ class Schemas
         'length' => 'required|integer',
         'width'  => 'required|integer',
         'height' => 'required|integer',
-        'unit'   => 'required|in:g,kg,oz,lb',
+        'unit'   => 'required|in:IN,CM',
     ];
 
     protected static $address = [
@@ -91,9 +67,8 @@ class Schemas
         $res = [];
         $prefix = empty($prefix) ? '' : $prefix. '.';
         foreach ($schema as $key => $val) {
-            if (is_array($val)) {
-                $res[$prefix.$key] = $val['rules'];
-                $link = $val['link'];
+            if (strpos($val, '@') !== false) {
+                $link = substr($val, 1);
                 $res = array_merge($res, self::resolve(self::${$link}, $prefix. $key));
             } else {
                 $res[$prefix.$key] = $val;
