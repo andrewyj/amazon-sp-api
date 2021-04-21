@@ -99,7 +99,7 @@ class AssumeRole
             'service'     => 'sts',
             'access_key'  => $this->accessKeyId,
             'secret_key'  => $this->secretAccessKey,
-            'form_params' => Query::build($requestOptions['form_params']),
+            'body'        => Query::build($requestOptions['form_params']),
         ]);
         if ($signedHeader === false) {
             throw new AmazonSellingPartnerAPIException($this->signer->getLastError());
@@ -120,7 +120,7 @@ class AssumeRole
         $res = json_decode($response->getBody(), true);
         $credentials = $res['AssumeRoleResponse']['AssumeRoleResult']['Credentials'] ?? null;
         if (is_null($credentials)) {
-            throw new AmazonSellingPartnerAPIException('Assume role error: '. $credentials['Error']['Message']);
+            throw new AmazonSellingPartnerAPIException('Assume role error: '. $res['Error']['Message']);
         }
 
         return $credentials;
