@@ -133,27 +133,13 @@ class Requester
 
     public function withQuery(array $queryParams): self
     {
-         $validated = $this->validate(
-            $this->context['config']['query_params'] ?? [],
-            $queryParams
-         );
-         foreach ($validated as $k => $v) {
-             if (is_array($v)) {
-                 $validated[$k] = implode(',', $v);
-             }
-         }
-        $this->context['query_params'] = $validated;
-
+        $this->context['query_params'] = $queryParams;
         return $this;
     }
 
     public function withForm(array $formParams): self
     {
-        $this->context['form_params'] = $this->validate(
-            $this->context['config']['form_params'] ?? [],
-            $formParams
-        );
-
+        $this->context['form_params'] = $formParams;
         return $this;
     }
 
@@ -193,10 +179,33 @@ class Requester
         return $client->request(
             $context['config']['method'],
             $context['uri'],
-            $context['form_params'] ?? [],
-            $context['query_params'] ?? [],
+            $this->getFormParams(),
+            $this->getQueryParams(),
             $context['body'] ?? ''
         );
+    }
+
+    protected function getFormParams(): array
+    {
+        return $this->validate(
+            $this->context['config']['form_params'] ?? [],
+            $this->context['form_params'] ?? []
+        );
+    }
+
+    protected function getQueryParams(): array
+    {
+        $validated = $this->validate(
+            $this->context['config']['query_params'] ?? [],
+            $this->context['query_params'] ?? []
+        );
+        foreach ($validated as $k => $v) {
+            if (is_array($v)) {
+                $validated[$k] = implode(',', $v);
+            }
+        }
+
+        return $validated;
     }
 
     /**
@@ -297,7 +306,7 @@ class Requester
      */
     protected function validate($rules, $arguments): array
     {
-        if (empty($rules)) {
+        if (empty($rules) || empty($arguments)) {
             return [];
         }
         $res = $this->validator->validate($rules, $arguments);
@@ -336,6 +345,12 @@ class Requester
         return $uri;
     }
 
+    /**
+     * @param $name string operationId.
+     * @param $pathParams array Path params.
+     * @return $this
+     * @throws ModuleException
+     */
     public function __call($name, $pathParams): self
     {
         if (!isset($this->config[$name])) {
