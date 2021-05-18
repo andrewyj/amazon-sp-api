@@ -8,13 +8,11 @@ use AmazonSellingPartnerAPI\Contract\SignInterface;
 use AmazonSellingPartnerAPI\Exception\ModuleException;
 use AmazonSellingPartnerAPI\OAuth;
 use AmazonSellingPartnerAPI\Validator;
-use GuzzleHttp\Utils;
-use Psr\SimpleCache\CacheInterface;
 
 class Requester
 {
     /**
-     * @var CacheInterface
+     * @var Object A cache driver which implements psr cache interface.
      */
     protected $cache;
 
@@ -77,12 +75,12 @@ class Requester
      *     'access_key'        => 'required|string',  Access Key of AWS IAM User, for example AKIAABCDJKEHFJDS
      *     'secret_key'        => 'required|string',  Secret Key of AWS IAM User
      * ]
-     * @param CacheInterface $cache
+     * @param $cache
      * @param SignInterface $signer
      * @throws ModuleException
      * @throws \AmazonSellingPartnerAPI\Exception\ClientException
      */
-    public function __construct(array $auth,  $cache, SignInterface $signer)
+    public function __construct(array $auth, $cache, SignInterface $signer)
     {
         $this->validator = new Validator();
         $this->cache     = $cache;
@@ -218,11 +216,16 @@ class Requester
         if (!isset($this->moduleName)) {
             throw new ModuleException('Module name undefined.');
         }
-        $filePath = dirname(__DIR__). "/config/{$this->moduleName}.php";
-        if (!file_exists($filePath)) {
-            throw new ModuleException('Config file not found');
+        $cacheKey = self::class. ':'. $this->moduleName. ':config';
+        $this->config = $this->cache->get($cacheKey);
+        if (empty($this->config)) {
+            $filePath = dirname(__DIR__). "/config/{$this->moduleName}.php";
+            if (!file_exists($filePath)) {
+                throw new ModuleException('Config file not found');
+            }
+            $this->config = include_once $filePath;
+            $this->cache->set($cacheKey, $this->config);
         }
-        $this->config = include_once $filePath;
     }
 
     /**
@@ -306,7 +309,7 @@ class Requester
      */
     protected function validate($rules, $arguments): array
     {
-        if (empty($rules) || empty($arguments)) {
+        if (empty($rules) && empty($arguments)) {
             return [];
         }
         $res = $this->validator->validate($rules, $arguments);

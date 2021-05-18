@@ -10,7 +10,7 @@ return [
             'LastUpdatedAfter' => 'string',
             'LastUpdatedBefore' => 'string',
             'OrderStatuses' => 'array',
-            'MarketplaceIds' => 'array|max:50',
+            'MarketplaceIds' => 'required|array|max:50',
             'FulfillmentChannels' => 'array',
             'PaymentMethods' => 'array',
             'BuyerEmail' => 'string',
