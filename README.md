@@ -114,7 +114,8 @@ return [
 
 ```php
 $orders = make(\AmazonSellingPartnerAPI\Module\Order::class, [
-    'auth' => $auth
+    'auth' => $auth,
+    'cache' => cache()
 ]);
   
 $orders->getOrder('XXX-XXXXXX-XXXXXXX')->send();
