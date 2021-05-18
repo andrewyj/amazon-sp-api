@@ -31,7 +31,7 @@ class Validator
                 if (strpos($rule, 'required') === false && !isset($values[$key])) {
                     continue;
                 }
-                if ($this->singleValidate($values[$key] ?? null, $rule, $key) === false) {
+                if ($this->singleValidate($values, $rule, $key) === false) {
                     break;
                 }
                 if (isset($values[$key])) {
@@ -58,13 +58,34 @@ class Validator
         return array_values($this->errors)[0] ?? '';
     }
 
-    protected function singleValidate($value, string $rules, $key): bool
+    protected function singleValidate($values, string $rules, $key): bool
     {
+        $value = $values[$key] ?? null;
         foreach (explode('|', $rules) as $rule) {
             $ruleValue = explode(':', $rule);
             if ($ruleValue[0] === 'required') {
                 if (is_null($value)) {
                     $this->errors[$key] = "{$key} is required";
+                    return false;
+                }
+            } elseif ($ruleValue[0] === 'required_without') {
+                if (!empty($value)) {
+                    continue;
+                }
+                $withoutFieldsString = $ruleValue[1] ?? '';
+                $withoutFields = explode(',', $withoutFieldsString);
+                foreach ($withoutFields as $field) {
+                    if (empty($values[$field])) {
+                        $this->errors[$key] = "{$key} is required without {$withoutFieldsString}";
+                        return false;
+                    }
+                }
+            } elseif (empty($value)) {
+                continue;
+            } elseif ($ruleValue[0] === 'time') {
+                $timestamp = strtotime($value);
+                if ($timestamp === false || gmdate("Y-m-d\TH:i:s\Z", $timestamp) != $value) {
+                    $this->errors[$key] = "{$key} must be in ISO 8601 date format";
                     return false;
                 }
             } elseif ($ruleValue[0] === 'array') {
