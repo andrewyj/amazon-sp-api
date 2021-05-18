@@ -28,9 +28,6 @@ class Validator
                 }
                 $this->arrayValidate($value, $rule, $keys, 0, count($keys) -1, $this->validatedArray[$index]);
             } else {
-                if (strpos($rule, 'required') === false && !isset($values[$key])) {
-                    continue;
-                }
                 if ($this->singleValidate($values, $rule, $key) === false) {
                     break;
                 }
