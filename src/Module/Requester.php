@@ -309,7 +309,7 @@ class Requester
      */
     protected function validate($rules, $arguments): array
     {
-        if (empty($rules) && empty($arguments)) {
+        if (empty($rules)) {
             return [];
         }
         $res = $this->validator->validate($rules, $arguments);
