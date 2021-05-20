@@ -6,6 +6,7 @@ use AmazonSellingPartnerAPI\AssumeRole;
 use AmazonSellingPartnerAPI\Client;
 use AmazonSellingPartnerAPI\Contract\SignInterface;
 use AmazonSellingPartnerAPI\Exception\ModuleException;
+use AmazonSellingPartnerAPI\Exception\ThrottleException;
 use AmazonSellingPartnerAPI\OAuth;
 use AmazonSellingPartnerAPI\RateLimiter;
 use AmazonSellingPartnerAPI\Validator;
@@ -163,12 +164,6 @@ class Requester
      */
     public function send()
     {
-        $name = $this->context['name'];
-        if ($this->rateLimiter->attempt($name) === false) {
-            throw new ModuleException("Throttling in {$this->rateLimiter->nextAttemptDuration($name)} seconds");
-        }
-        return [];
-
         if (empty($this->auth)) {
             throw new ModuleException('Not auth info has set');
         }
@@ -185,7 +180,7 @@ class Requester
         $context = $this->context;
         $name = $this->context['name'];
         if ($this->rateLimiter->attempt($name) === false) {
-            throw new ModuleException("Throttling in {$this->rateLimiter->nextAttemptDuration($name)} seconds");
+            throw new ThrottleException($this->rateLimiter->nextAttemptDuration($name));
         }
 
         return $client->request(
