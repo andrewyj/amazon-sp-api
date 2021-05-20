@@ -19,29 +19,53 @@ return [
             'EasyShipShipmentStatuses' => 'array',
             'NextToken' => 'string',
             'AmazonOrderIds' => 'array',
+        ],
+        'rate_limit' => [
+            'rate'  => 0.0055,
+            'burst' => 20
         ]
     ],
     'getOrder' => [
         'path' => '/orders/v0/orders/{orderId}',
         'method' => 'GET',
+        'rate_limit' => [
+            'rate'  => 0.0055,
+            'burst' => 20
+        ]
     ],
     'getOrderBuyerInfo' => [
         'path' => '/orders/v0/orders/{orderId}/buyerInfo',
         'method' => 'GET',
+        'rate_limit' => [
+            'rate'  => 0.0055,
+            'burst' => 20
+        ]
     ],
     'getOrderAddress' => [
         'path' => '/orders/v0/orders/{orderId}/address',
         'method' => 'GET',
+        'rate_limit' => [
+            'rate'  => 0.0055,
+            'burst' => 20
+        ]
     ],
     'getOrderItems' => [
         'path' => '/orders/v0/orders/{orderId}/orderItems',
         'method' => 'GET',
+        'rate_limit' => [
+            'rate'  => 0.0055,
+            'burst' => 20
+        ]
     ],
     'getOrderItemsBuyerInfo' => [
         'path' => '/orders/v0/orders/{orderId}/orderItems/buyerInfo',
         'method' => 'GET',
         'query_params' => [
             'NextToken' => 'string'
+        ],
+        'rate_limit' => [
+            'rate'  => 0.0055,
+            'burst' => 20
         ]
     ],
 

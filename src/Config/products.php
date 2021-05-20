@@ -10,6 +10,10 @@ return [
             'Skus' => 'array',
             'ItemType' => 'in:Asin,Sku',
             'ItemCondition' => 'in:New,Used,Collectible,Refurbished,Club',
+        ],
+        'rate_limit' => [
+            'rate'  => 10,
+            'burst' => 20
         ]
     ],
     'getCompetitivePricing' => [
@@ -20,6 +24,10 @@ return [
             'Asins' => 'array',
             'Skus' => 'array',
             'ItemType' => 'in:Asin,Sku',
+        ],
+        'rate_limit' => [
+            'rate'  => 10,
+            'burst' => 20
         ]
     ],
     'getListingOffers' => [
@@ -28,6 +36,10 @@ return [
         'query_params' => [
             'MarketplaceId' => 'required|string',
             'ItemCondition' => 'in:New,Used,Collectible,Refurbished,Club',
+        ],
+        'rate_limit' => [
+            'rate'  => 5,
+            'burst' => 10
         ]
     ],
     'getItemOffers' => [
@@ -36,6 +48,10 @@ return [
         'query_params' => [
             'MarketplaceId' => 'required|string',
             'ItemCondition' => 'in:New,Used,Collectible,Refurbished,Club',
+        ],
+        'rate_limit' => [
+            'rate'  => 5,
+            'burst' => 10
         ]
     ],
 

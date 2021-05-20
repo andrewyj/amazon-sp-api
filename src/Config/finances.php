@@ -9,6 +9,10 @@ return [
             'FinancialEventGroupStartedBefore' => 'string',
             'FinancialEventGroupStartedAfter' => 'string',
             'NextToken' => 'string',
+        ],
+        'rate_limit' => [
+            'rate'  => 0.5,
+            'burst' => 30
         ]
     ],
     'listFinancialEventsByGroupId' => [
@@ -18,6 +22,10 @@ return [
             'MaxResultsPerPage' => 'integer',
             'eventGroupId' => 'string',
             'NextToken' => 'string',
+        ],
+        'rate_limit' => [
+            'rate'  => 0.5,
+            'burst' => 30
         ]
     ],
     'listFinancialEventsByOrderId' => [
@@ -26,6 +34,10 @@ return [
         'query_params' => [
             'MaxResultsPerPage' => 'integer',
             'NextToken' => 'string',
+        ],
+        'rate_limit' => [
+            'rate'  => 0.5,
+            'burst' => 30
         ]
     ],
     'listFinancialEvents' => [
@@ -36,6 +48,10 @@ return [
             'PostedAfter' => 'string',
             'PostedBefore' => 'string',
             'NextToken' => 'string',
+        ],
+        'rate_limit' => [
+            'rate'  => 0.5,
+            'burst' => 30
         ]
     ],
 ];

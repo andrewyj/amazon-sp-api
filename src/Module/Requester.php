@@ -7,6 +7,7 @@ use AmazonSellingPartnerAPI\Client;
 use AmazonSellingPartnerAPI\Contract\SignInterface;
 use AmazonSellingPartnerAPI\Exception\ModuleException;
 use AmazonSellingPartnerAPI\OAuth;
+use AmazonSellingPartnerAPI\RateLimiter;
 use AmazonSellingPartnerAPI\Validator;
 
 class Requester
@@ -63,6 +64,8 @@ class Requester
      */
     protected $context = [];
 
+    protected $rateLimiter;
+
     /**
      * Requester constructor.
      * @param array $auth
@@ -88,6 +91,7 @@ class Requester
         $this->setConfig();
         $this->setAuth($auth);
         $this->client = new Client($signer);
+        $this->rateLimiter = new RateLimiter($cache);
     }
 
     /**
@@ -159,6 +163,12 @@ class Requester
      */
     public function send()
     {
+        $name = $this->context['name'];
+        if ($this->rateLimiter->attempt($name) === false) {
+            throw new ModuleException("Throttling in {$this->rateLimiter->nextAttemptDuration($name)} seconds");
+        }
+        return [];
+
         if (empty($this->auth)) {
             throw new ModuleException('Not auth info has set');
         }
@@ -173,6 +183,10 @@ class Requester
         }
         $client = $this->client->setAuth($this->auth);
         $context = $this->context;
+        $name = $this->context['name'];
+        if ($this->rateLimiter->attempt($name) === false) {
+            throw new ModuleException("Throttling in {$this->rateLimiter->nextAttemptDuration($name)} seconds");
+        }
 
         return $client->request(
             $context['config']['method'],
@@ -359,10 +373,14 @@ class Requester
         if (!isset($this->config[$name])) {
             throw new ModuleException("Invalid operationId: {$name}");
         }
+        $config = $this->config[$name];
+        if (!$this->rateLimiter->has($name)) {
+            $this->rateLimiter->for($name, $config['rate_limit']['burst'], $config['rate_limit']['rate']);
+        }
         $this->context = [
             'name'   => $name,
-            'config' => $this->config[$name],
-            'uri'    => $this->resolveUri($this->config[$name]['path'], $pathParams)
+            'config' => $config,
+            'uri'    => $this->resolveUri($config['path'], $pathParams)
         ];
 
         return $this;
