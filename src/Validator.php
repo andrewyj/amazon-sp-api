@@ -27,6 +27,7 @@ class Validator
     {
         $this->errors = [];
         $this->validated = [];
+        $this->rules = [];
         $this->values = $values;
         $this->tidyRules($rules);
         $this->doValidate($this->rules, $values, $this->validated);
