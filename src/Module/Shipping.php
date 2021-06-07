@@ -16,4 +16,5 @@ namespace AmazonSellingPartnerAPI\Module;
 class Shipping extends Requester
 {
     protected $moduleName = 'shipping';
+    protected $version = 'v1';
 }

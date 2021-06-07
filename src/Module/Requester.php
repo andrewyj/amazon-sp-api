@@ -64,6 +64,8 @@ class Requester
 
     protected $rateLimiter;
 
+    protected $version = 'v0';
+
     /**
      * Requester constructor.
      * @param array $auth
@@ -149,6 +151,18 @@ class Requester
     {
         $this->context['body'] = $body;
 
+        return $this;
+    }
+
+    /**
+     * Call it before calling a operation.
+     *
+     * @param string $version
+     * @return $this
+     */
+    public function setVersion(string $version)
+    {
+        $this->version = $version;
         return $this;
     }
 
@@ -339,12 +353,7 @@ class Requester
 
     protected function configGet($name, $default = null)
     {
-        return Config::get("{$this->getModuleName()}.{$this->context['name']}.{$name}", $default);
-    }
-
-    protected function getModuleName(): string
-    {
-        return $this->moduleName;
+        return Config::get("{$this->moduleName}.{$this->version}.{$this->context['name']}.{$name}", $default);
     }
 
     protected function getRateLimit()
