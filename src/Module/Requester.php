@@ -339,7 +339,12 @@ class Requester
 
     protected function configGet($name, $default = null)
     {
-        return Config::get("{$this->moduleName}.{$this->context['name']}.{$name}", $default);
+        return Config::get("{$this->getModuleName()}.{$this->context['name']}.{$name}", $default);
+    }
+
+    protected function getModuleName(): string
+    {
+        return $this->moduleName;
     }
 
     protected function getRateLimit()
