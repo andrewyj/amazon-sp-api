@@ -134,7 +134,7 @@ class Validator
             }
             return true;
         };
-        $this->validators['time'] = function ($value, $key, $ruleValues): bool {
+        $this->validators['dateISO8601'] = function ($value, $key, $ruleValues): bool {
             $timestamp = strtotime($value);
             if ($timestamp === false || gmdate("Y-m-d\TH:i:s\Z", $timestamp) != $value) {
                 $this->errors[$key] = "{$key} must be in ISO 8601 date format";
