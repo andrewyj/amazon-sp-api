@@ -4,6 +4,7 @@ namespace AmazonSellingPartnerAPI\Module;
 
 use AmazonSellingPartnerAPI\AssumeRole;
 use AmazonSellingPartnerAPI\Client;
+use AmazonSellingPartnerAPI\Config\Config;
 use AmazonSellingPartnerAPI\Contract\SignInterface;
 use AmazonSellingPartnerAPI\Exception\ModuleException;
 use AmazonSellingPartnerAPI\Exception\ThrottleException;
@@ -34,11 +35,6 @@ class Requester
     protected $oAuth;
 
     /**
-     * @var array
-     */
-    protected $config;
-
-    /**
      * @var Validator
      */
     protected $validator;
@@ -59,11 +55,12 @@ class Requester
      *     uri:string Request uri
      *     query_params:array query params
      *     form_params:array form params
-     *     config:array Config of current operationId
      *     name:string  Current operationId
      * ]
      */
     protected $context = [];
+
+    protected $rateLimitCacheKey;
 
     protected $rateLimiter;
 
@@ -86,10 +83,12 @@ class Requester
      */
     public function __construct(array $auth, $cache, SignInterface $signer)
     {
+        if (!isset($this->moduleName)) {
+            throw new ModuleException('Undefined module name.');
+        }
         $this->validator = new Validator();
         $this->cache     = $cache;
         $this->signer    = $signer;
-        $this->setConfig();
         $this->setAuth($auth);
         $this->client = new Client($signer);
         $this->rateLimiter = new RateLimiter($cache);
@@ -178,24 +177,26 @@ class Requester
         }
         $client = $this->client->setAuth($this->auth);
         $context = $this->context;
-        $name = $this->context['name'];
-        if ($this->rateLimiter->attempt($name) === false) {
-            throw new ThrottleException($this->rateLimiter->nextAttemptDuration($name));
+        if ($this->client->isDebug() === false && $this->attempt() === false) {
+            throw new ThrottleException($this->rateLimiter->nextAttemptDuration($context['name']));
         }
 
-        return $client->request(
-            $context['config']['method'],
+        $res = $client->request(
+            $this->configGet('method'),
             $context['uri'],
             $this->getFormParams(),
             $this->getQueryParams(),
             $context['body'] ?? ''
         );
+        $this->cache->set($this->rateLimitCacheKey, $client->getRateLimit());
+
+        return $res;
     }
 
     protected function getFormParams(): array
     {
         return $this->validate(
-            $this->context['config']['form_params'] ?? [],
+            $this->configGet('form_params', []),
             $this->context['form_params'] ?? []
         );
     }
@@ -203,7 +204,7 @@ class Requester
     protected function getQueryParams(): array
     {
         $validated = $this->validate(
-            $this->context['config']['query_params'] ?? [],
+            $this->configGet('query_params', []),
             $this->context['query_params'] ?? []
         );
         foreach ($validated as $k => $v) {
@@ -213,28 +214,6 @@ class Requester
         }
 
         return $validated;
-    }
-
-    /**
-     * Set operationId config
-     *
-     * @throws ModuleException
-     */
-    protected function setConfig()
-    {
-        if (!isset($this->moduleName)) {
-            throw new ModuleException('Module name undefined.');
-        }
-        $cacheKey = self::class. ':'. $this->moduleName. ':config';
-        $this->config = $this->cache->get($cacheKey);
-        if (empty($this->config)) {
-            $filePath = dirname(__DIR__). "/config/{$this->moduleName}.php";
-            if (!file_exists($filePath)) {
-                throw new ModuleException('Config file not found');
-            }
-            $this->config = include_once $filePath;
-            $this->cache->set($cacheKey, $this->config);
-        }
     }
 
     /**
@@ -335,6 +314,7 @@ class Requester
      * @param string $uri
      * @param array $pathParams
      * @return string
+     * @throws ModuleException
      */
     protected function resolveUri(string $uri, array $pathParams): string
     {
@@ -357,6 +337,28 @@ class Requester
         return $uri;
     }
 
+    protected function configGet($name, $default = null)
+    {
+        return Config::get("{$this->moduleName}.{$this->context['name']}.{$name}", $default);
+    }
+
+    protected function getRateLimit()
+    {
+        return $this->cache->get($this->rateLimitCacheKey) ? : $this->configGet('rate_limit.rate');
+    }
+
+    protected function attempt(): bool
+    {
+        $name = $this->context['name'];
+        $this->rateLimiter->for(
+            $name,
+            $this->configGet('rate_limit.burst'),
+            $this->getRateLimit()
+        );
+
+        return $this->rateLimiter->attempt($name);
+    }
+
     /**
      * @param $name string operationId.
      * @param $pathParams array Path params.
@@ -365,18 +367,11 @@ class Requester
      */
     public function __call($name, $pathParams): self
     {
-        if (!isset($this->config[$name])) {
-            throw new ModuleException("Invalid operationId: {$name}");
-        }
-        $config = $this->config[$name];
-        if (!$this->rateLimiter->has($name)) {
-            $this->rateLimiter->for($name, $config['rate_limit']['burst'], $config['rate_limit']['rate']);
-        }
         $this->context = [
             'name'   => $name,
-            'config' => $config,
-            'uri'    => $this->resolveUri($config['path'], $pathParams)
         ];
+        $this->context['uri'] = $this->resolveUri($this->configGet('path'), $pathParams);
+        $this->rateLimitCacheKey = 'amazon_sp_api:rate_limit.'. md5($this->auth['refresh_token'].$name);
 
         return $this;
     }

@@ -68,6 +68,12 @@ class Client
     protected $debug = false;
 
     /**
+     * Last request rateLimit.
+     * @var null
+     */
+    protected $rateLimit = null;
+
+    /**
      * Client constructor.
      *
      * @param SignInterface $signer
@@ -121,6 +127,11 @@ class Client
         return $this;
     }
 
+    public function isDebug(): bool
+    {
+        return $this->debug;
+    }
+
     public function post(string $uri, array $queryParams = [], array $formParams = [])
     {
         return $this->request('POST', $uri, $formParams, $queryParams);
@@ -155,6 +166,7 @@ class Client
         if (empty($this->auth)) {
             throw new ClientException('Not auth info has set');
         }
+        $this->resetRateLimit();
         try {
             if (!empty($formParams)) {
                 ksort($formParams);
@@ -178,8 +190,19 @@ class Client
         } catch (\Exception $e) {
             throw new ClientException($e->getMessage(), $e->getCode());
         }
+        $this->rateLimit = $response->getHeaders()['x-amzn-RateLimit-Limit'][0] ?? null;
 
         return Utils::jsonDecode($contents, true);
+    }
+
+    public function getRateLimit()
+    {
+        return $this->rateLimit;
+    }
+
+    protected function resetRateLimit()
+    {
+        $this->rateLimit = null;
     }
 
     protected function getSignedHeaders(string $method, string $uri, string $queryString, string $body): array
