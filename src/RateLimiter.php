@@ -96,7 +96,7 @@ class RateLimiter
         if ($attempts > $this->limiters[$name]['max_attempts']) {
             return false;
         }
-        $this->cachePut($name, $attempts);
+        $this->cacheSet($name, $attempts);
 
         return true;
     }
@@ -106,11 +106,11 @@ class RateLimiter
         return array_sum(explode(' ', microtime()));
     }
 
-    protected function cachePut(string $name, int $attempts)
+    protected function cacheSet(string $name, int $attempts)
     {
         $limiter = $this->limiters[$name];
         $expiredInSeconds = (int)($attempts / $limiter['rate_per_sec']);
-        $this->cache->put($this->cacheKey($name), [
+        $this->cache->set($this->cacheKey($name), [
             'attempts' => $attempts,
             'micro_timestamp' => $this->curMicroTime()
         ], $expiredInSeconds);
