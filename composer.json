@@ -1,15 +1,17 @@
 {
-    "name": "ju/amazon-sp-api",
+    "name": "andrewyj/amazon-sp-api",
     "description": "Amazon selling partner sdk",
     "require": {
         "guzzlehttp/guzzle": "^6.3|^7.0",
         "php": ">=7.3",
         "ext-json": "*"
     },
+    "keywords": ["amazon", "sp-api"],
     "authors": [
         {
-            "name": "ju",
-            "email": "yingjunov@gmail.com"
+            "name": "andrew",
+            "email": "andrewyingju@gmail.com",
+            "homepage": "https://andrewhuang.cc"
         }
     ],
     "minimum-stability" : "dev",
