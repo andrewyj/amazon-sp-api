@@ -5,6 +5,7 @@ namespace AmazonSellingPartnerAPI;
 use AmazonSellingPartnerAPI\Exception\OAuthException;
 use GuzzleHttp\Client;
 use GuzzleHttp\RequestOptions;
+use GuzzleHttp\Utils;
 
 class OAuth
 {
@@ -78,7 +79,7 @@ class OAuth
         ];
         $response = $this->client->post('token', $options);
         $body = $response->getBody()->getContents();
-        $res  = json_decode($body);
+        $res = Utils::jsonDecode($body);
         if (isset($res->error)) {
             throw new OAuthException($res->error. ':'. $res->error_description);
         }

@@ -8,6 +8,7 @@ use GuzzleHttp\Client;
 use GuzzleHttp\Exception\ClientException;
 use GuzzleHttp\Exception\RequestException;
 use GuzzleHttp\Psr7\Query;
+use GuzzleHttp\Utils;
 
 class AssumeRole
 {
@@ -110,14 +111,10 @@ class AssumeRole
         $requestOptions['headers'] = array_merge($requestOptions['headers'], $signedHeader);
         try {
             $response = $client->post($uri, $requestOptions);
-        } catch (ClientException $e) {
+        } catch (ClientException | RequestException $e) {
             $response = $e->getResponse();
-        } catch (RequestException $e) {
-            $response = $e->getResponse();
-        } catch (\Exception $e) {
-            throw new AmazonSellingPartnerAPIException($e->getMessage(), $e->getCode());
         }
-        $res = json_decode($response->getBody(), true);
+        $res = Utils::jsonDecode($response->getBody(), true);
         $credentials = $res['AssumeRoleResponse']['AssumeRoleResult']['Credentials'] ?? null;
         if (is_null($credentials)) {
             throw new AmazonSellingPartnerAPIException('Assume role error: '. $res['Error']['Message']);

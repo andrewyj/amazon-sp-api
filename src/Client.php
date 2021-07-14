@@ -187,8 +187,6 @@ class Client
         } catch (\GuzzleHttp\Exception\ClientException | RequestException $e) {
             $response = $e->getResponse();
             $contents = str_replace(["\r\n", "\r", "\n"], '', $response->getBody()->getContents());
-        } catch (\Exception $e) {
-            throw new ClientException($e->getMessage(), $e->getCode());
         }
         $this->rateLimit = $response->getHeaders()['x-amzn-RateLimit-Limit'][0] ?? null;
 
