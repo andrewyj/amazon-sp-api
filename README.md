@@ -64,7 +64,7 @@ var_dump($client->get('/orders/v0/orders/XXX-XXXXXX-XXXXXXX'));
 
 ```php
 $sign = new \AmazonSellingPartnerAPI\Signature\V4Signature();
-$cache = new Cache(); //缓存驱动必须实现 Psr\SimpleCache\CacheInterface 接口
+$cache = new Cache();
 $order = new \AmazonSellingPartnerAPI\Module\Order($auth, $cache, $sign);
 ```
 > `Cache()` are used to cache role credentials and access_token.It must have `get()` and `set()` functions. if you don't have one. create an adapter.
